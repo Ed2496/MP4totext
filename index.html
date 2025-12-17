@@ -4,8 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>短視頻分析工具 - Gemini 2.5</title>
-    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-    <script src="[https://unpkg.com/lucide@latest](https://unpkg.com/lucide@latest)"></script>
+    <!-- 修正腳本引用路徑 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .gradient-bg { background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%); }
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
@@ -87,7 +88,7 @@
                 </div>
 
                 <div id="result-view" class="hidden space-y-6">
-                    <!-- Cards will be injected here -->
+                    <!-- 分析結果將在此處生成 -->
                 </div>
             </div>
         </div>
@@ -104,7 +105,17 @@
     </div>
 
     <script>
-        lucide.createIcons();
+        // 安全初始化圖標
+        function initIcons() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // 當頁面載入完成後執行
+        window.onload = function() {
+            initIcons();
+        };
 
         // --- Configuration & State ---
         const config = {
@@ -156,7 +167,7 @@
 
         async function analyzeWithRetry(text, apiKey) {
             const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent?key=${apiKey}`;
-            const systemPrompt = "你是一位頂尖的內容安全與數據分析專家，擅長識破短視頻中的詐騙、AI 幻覺與情緒操控。";
+            const systemPrompt = "你是一位頂尖的內容安全與數據分析專家，擅長識破短視頻中的詐騙、AI 幻覺與情緒操控。請使用繁體中文回答。";
             const userPrompt = `請分析以下文字稿，並嚴格按照 JSON 格式回傳：\n\n【文字稿】\n${text}`;
             
             const responseSchema = {
@@ -283,7 +294,7 @@
                         </section>
 
                         <section>
-                            <h4 class="text-sm font-bold text-red-400 uppercase tracking-wider mb-3">可疑红旗標籤</h4>
+                            <h4 class="text-sm font-bold text-red-400 uppercase tracking-wider mb-3">可疑紅旗標籤</h4>
                             <ul class="space-y-2">
                                 ${data.red_flags.map(f => `<li class="flex items-start gap-2 text-sm text-slate-600">
                                     <i data-lucide="alert-triangle" class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0"></i> ${f}
@@ -294,14 +305,14 @@
                 </div>
             `;
             resultView.classList.remove('hidden');
-            lucide.createIcons();
+            initIcons();
         }
 
         // --- UI Utilities ---
         function showError(msg) {
             document.getElementById('error-message').textContent = msg;
             document.getElementById('error-modal').classList.remove('hidden');
-            lucide.createIcons();
+            initIcons();
         }
 
         function closeError() {
@@ -309,7 +320,6 @@
         }
 
         function showMessage(msg) {
-            // Simple alert fallback for the context
             console.log(msg);
             const btn = document.getElementById('save-key-btn');
             const originalText = btn.textContent;
@@ -320,4 +330,3 @@
     </script>
 </body>
 </html>
-
