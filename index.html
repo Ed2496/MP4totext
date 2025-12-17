@@ -1,287 +1,323 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>短視頻文字稿多維度分析工具（Gemini 2.5 版）</title>
-  <meta name="description" content="使用最新 Google Gemini 2.5 Flash AI 進行分析（高免費額度、超快）"/>
-  
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  
-  <style>
-    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: linear-gradient(to bottom right, #edf2ff, #eef2ff, #f5f3ff); min-height: 100vh; }
-    .container { max-width: 80rem; margin: 0 auto; padding: 1.5rem; }
-    .card { background: white; border-radius: 0.75rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden; }
-    .header { background: linear-gradient(to right, #4f46e5, #9333ea); padding: 2rem; color: white; }
-    .header h1 { font-size: 2.25rem; font-weight: 700; display: flex; align-items: center; gap: 1rem; }
-    .content { padding: 2rem; display: flex; flex-direction: column; gap: 2rem; }
-    .btn-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-    @media (min-width: 768px) { .btn-grid { grid-template-columns: repeat(3, 1fr); } }
-    .btn { padding: 1rem 1.5rem; border-radius: 0.5rem; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 0.75rem; transition: background 0.2s; }
-    .btn.active, .btn-primary { background: #4f46e5; color: white; }
-    .btn-secondary { background: white; border: 1px solid #d1d5db; color: #374151; }
-    .btn-secondary:hover { background: #f3f4f6; }
-    .textarea { width: 100%; padding: 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; min-height: 300px; resize: vertical; font-size: 1rem; }
-    .textarea:focus { outline: none; box-shadow: 0 0 0 4px rgba(79,70,229,0.3); }
-    pre { background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; white-space: pre-wrap; }
-    .hidden { display: none; }
-    .flex { display: flex; }
-    .gap-4 { gap: 1rem; }
-    .flex-1 { flex: 1; }
-    .text-center { text-align: center; }
-    .animate-spin { animation: spin 1s linear infinite; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .alert { padding: 1.5rem; border-radius: 0.75rem; border: 1px solid; }
-    .alert-warning { background: #fffbeb; border-color: #fcd34d; color: #78350f; }
-    .alert-error { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>短視頻分析工具 - Gemini 2.5</title>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <script src="[https://unpkg.com/lucide@latest](https://unpkg.com/lucide@latest)"></script>
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%); }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        @keyframes shimmer { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        .loading-shimmer { animation: shimmer 1.5s infinite; }
+    </style>
 </head>
-<body>
-  <div class="container">
-    <div class="card">
-      <div class="header">
-        <h1>
-          <i data-lucide="file-text" class="w-10 h-10"></i>
-          短視頻文字稿多維度分析工具
-        </h1>
-        <p class="text-lg opacity-90 mt-3">最新 Google Gemini 2.5 Flash 驅動（更快、更強、免費額度高）</p>
-      </div>
+<body class="bg-slate-50 min-height-screen font-sans">
+    <div class="max-w-5xl mx-auto p-4 md:p-8">
+        <!-- Header -->
+        <header class="gradient-bg rounded-2xl p-8 mb-8 text-white shadow-xl relative overflow-hidden">
+            <div class="relative z-10">
+                <div class="flex items-center gap-3 mb-2">
+                    <i data-lucide="sparkles" class="w-8 h-8"></i>
+                    <h1 class="text-3xl font-bold tracking-tight">短視頻分析戰情室</h1>
+                </div>
+                <p class="text-indigo-100 opacity-90">基於 Gemini 2.5 Flash 驅動的多維度真實性與風險評估</p>
+            </div>
+            <div class="absolute right-[-20px] top-[-20px] opacity-10">
+                <i data-lucide="brain" class="w-48 h-48 text-white"></i>
+            </div>
+        </header>
 
-      <div class="content">
-        <div class="p-6 bg-gray-50 rounded-xl border border-gray-200">
-          <h3 class="text-lg font-semibold mb-4">📥 選擇輸入方式</h3>
-          <div class="btn-grid">
-            <button id="mode-paste" class="btn active btn-primary">
-              <i data-lucide="edit-3"></i> 貼上文字
-            </button>
-            <button id="mode-file" class="btn btn-secondary">
-              <i data-lucide="upload"></i> 上傳 TXT
-            </button>
-            <button id="mode-sample" class="btn btn-secondary">
-              <i data-lucide="play-circle"></i> 範例文字稿
-            </button>
-          </div>
+        <!-- API Key Setup -->
+        <div id="key-section" class="mb-8 bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <div class="flex-1">
+                    <label class="block text-sm font-semibold text-amber-800 mb-1">Google API Key</label>
+                    <input type="password" id="api-key-input" placeholder="輸入 AIzaSy... 開頭的密鑰" 
+                        class="w-full p-2 border border-amber-300 rounded focus:ring-2 focus:ring-amber-500 outline-none text-sm" />
+                </div>
+                <button id="save-key-btn" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded font-medium transition-colors text-sm w-full md:w-auto">
+                    儲存金鑰
+                </button>
+            </div>
+            <p class="text-xs text-amber-600 mt-2">※ 密鑰僅存在本地瀏覽器，Gemini 2.5 Flash 提供極速分析與高額免費額度。</p>
         </div>
 
-        <div id="paste-area">
-          <label class="block text-lg font-semibold mb-2">請貼上文字稿內容</label>
-          <textarea id="transcript-input" class="textarea" placeholder="在此貼上完整的短視頻文字稿..."></textarea>
-          <button id="confirm-paste" class="mt-4 px-8 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
-            確認並準備分析
-          </button>
-        </div>
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left: Input Side -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="file-text" class="w-5 h-5"></i> 輸入內容
+                        </h2>
+                        <div class="flex gap-2">
+                            <button id="use-sample" class="text-xs text-indigo-600 hover:underline">使用範例</button>
+                            <label class="text-xs text-slate-500 cursor-pointer hover:text-indigo-600">
+                                <span>上傳 TXT</span>
+                                <input type="file" id="file-upload" class="hidden" accept=".txt">
+                            </label>
+                        </div>
+                    </div>
+                    <textarea id="input-text" placeholder="在此貼上短視頻文字稿內容..." 
+                        class="w-full h-64 p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-slate-700"></textarea>
+                    
+                    <button id="analyze-btn" class="w-full mt-4 gradient-bg text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg active:scale-95 disabled:opacity-50">
+                        <i data-lucide="zap" class="w-6 h-6"></i>
+                        開始 AI 深度分析
+                    </button>
+                </div>
+            </div>
 
-        <div id="file-area" class="hidden">
-          <label class="block text-lg font-semibold mb-2">選擇 TXT 檔案</label>
-          <input type="file" id="file-input" accept=".txt,text/plain" class="w-full p-3 border rounded-lg" />
-        </div>
+            <!-- Right: Result Side -->
+            <div class="lg:col-span-7">
+                <div id="loading-state" class="hidden h-full flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
+                    <div class="relative mb-4">
+                        <i data-lucide="loader-2" class="w-12 h-12 text-indigo-600 animate-spin"></i>
+                    </div>
+                    <p class="text-slate-600 font-medium">Gemini 正在計算多維度矩陣...</p>
+                    <p id="retry-info" class="text-xs text-slate-400 mt-2"></p>
+                </div>
 
-        <div id="original-content" class="hidden p-6 bg-gray-50 rounded-xl border">
-          <h3 class="font-semibold text-lg mb-3 flex items-center gap-2">
-            <i data-lucide="info"></i> 文字稿內容
-          </h3>
-          <pre id="content-display"></pre>
-        </div>
+                <div id="empty-state" class="h-full flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-200 text-slate-400">
+                    <i data-lucide="search" class="w-16 h-16 mb-4 opacity-20"></i>
+                    <p>等待分析指令...</p>
+                </div>
 
-        <div id="analyze-section" class="hidden flex gap-4">
-          <button id="analyze-btn" class="flex-1 py-4 bg-indigo-600 text-white rounded-lg font-bold text-lg flex items-center justify-center gap-3 hover:bg-indigo-700">
-            <i data-lucide="brain"></i> 開始 Gemini 分析
-          </button>
-          <button id="export-btn" class="hidden py-4 px-8 bg-green-600 text-white rounded-lg font-bold flex items-center gap-3 hover:bg-green-700">
-            <i data-lucide="download"></i> 匯出 MD
-          </button>
+                <div id="result-view" class="hidden space-y-6">
+                    <!-- Cards will be injected here -->
+                </div>
+            </div>
         </div>
-
-        <div id="analyzing" class="hidden text-center py-12">
-          <i data-lucide="loader-2" class="w-16 h-16 animate-spin text-indigo-600 mx-auto mb-4"></i>
-          <p class="text-xl text-gray-700">Gemini 正在分析（通常 5-15 秒）...</p>
-        </div>
-
-        <div id="result" class="hidden space-y-8"></div>
-
-        <div id="error-msg" class="hidden alert alert-error">
-          <h3 class="font-bold flex items-center gap-2">
-            <i data-lucide="alert-triangle"></i> 發生錯誤
-          </h3>
-          <p id="error-text" class="mt-2"></p>
-        </div>
-
-        <div class="alert alert-warning">
-          <p class="font-medium">
-            需要 <strong>Google Gemini API Key</strong>（完全免費申請）。<br/>
-            請到 <a href="https://aistudio.google.com/app/apikey" target="_blank" class="underline">Google AI Studio</a> 建立 Key（AIzaSy... 開頭），然後貼下方：
-          </p>
-          <input type="password" id="api-key-input" placeholder="輸入 Gemini API Key" class="mt-4 w-full p-4 border border-amber-300 rounded-lg"/>
-          <button id="save-key" class="mt-3 px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">儲存 Key</button>
-          <p class="mt-3 text-sm">Key 只儲存在您的瀏覽器本地，安全無虞。Gemini 2.5 Flash 每天有高額免費額度！</p>
-        </div>
-      </div>
     </div>
-  </div>
 
-  <script>
-    lucide.createIcons();
+    <!-- Error Modal -->
+    <div id="error-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="text-red-500 mb-4"><i data-lucide="alert-circle" class="w-12 h-12"></i></div>
+            <h3 class="text-xl font-bold mb-2">分析中斷</h3>
+            <p id="error-message" class="text-slate-600 mb-6"></p>
+            <button onclick="closeError()" class="w-full py-3 bg-slate-100 rounded-xl font-bold hover:bg-slate-200">關閉</button>
+        </div>
+    </div>
 
-    const els = {
-      transcriptInput: document.getElementById('transcript-input'),
-      confirmPaste: document.getElementById('confirm-paste'),
-      fileInput: document.getElementById('file-input'),
-      contentDisplay: document.getElementById('content-display'),
-      originalContent: document.getElementById('original-content'),
-      analyzeSection: document.getElementById('analyze-section'),
-      analyzeBtn: document.getElementById('analyze-btn'),
-      exportBtn: document.getElementById('export-btn'),
-      analyzing: document.getElementById('analyzing'),
-      result: document.getElementById('result'),
-      errorMsg: document.getElementById('error-msg'),
-      errorText: document.getElementById('error-text'),
-      apiKeyInput: document.getElementById('api-key-input'),
-      saveKey: document.getElementById('save-key')
-    };
+    <script>
+        lucide.createIcons();
 
-    let currentTranscript = '';
-    let currentAnalysis = null;
+        // --- Configuration & State ---
+        const config = {
+            model: "gemini-2.5-flash-preview-09-2025",
+            retryCount: 5
+        };
 
-    if (localStorage.getItem('gemini_api_key')) {
-      els.apiKeyInput.placeholder = 'Key 已儲存（可修改）';
-    }
+        let currentAnalysis = null;
 
-    els.saveKey.onclick = () => {
-      const key = els.apiKeyInput.value.trim();
-      if (key.startsWith('AIzaSy')) {
-        localStorage.setItem('gemini_api_key', key);
-        alert('Gemini API Key 儲存成功！');
-      } else if (key === '') {
-        localStorage.removeItem('gemini_api_key');
-        alert('已清除 Key');
-      } else {
-        alert('請輸入正確的 Gemini API Key（以 AIzaSy 開頭）');
-      }
-    };
+        // --- Elements ---
+        const apiKeyInput = document.getElementById('api-key-input');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const inputText = document.getElementById('input-text');
+        const resultView = document.getElementById('result-view');
+        const loadingState = document.getElementById('loading-state');
+        const emptyState = document.getElementById('empty-state');
+        const retryInfo = document.getElementById('retry-info');
 
-    document.querySelectorAll('.btn').forEach(btn => {
-      if (!btn.id.startsWith('mode-')) return;
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.btn').forEach(b => {
-          b.classList.remove('active', 'btn-primary');
-          b.classList.add('btn-secondary');
-        });
-        btn.classList.add('active', 'btn-primary');
-        btn.classList.remove('btn-secondary');
-
-        document.getElementById('paste-area').classList.toggle('hidden', btn.id !== 'mode-paste');
-        document.getElementById('file-area').classList.toggle('hidden', btn.id !== 'mode-file');
-
-        if (btn.id === 'mode-sample') {
-          els.transcriptInput.value = `最近發現一個超級賺錢的秘密！只需投資3萬元，保證一個月內回本並賺到10倍！這是內部消息，只有少數人知道，現在馬上加入不然就晚了！私訊我獲取名額，只有最後5個位置！`;
-          els.confirmPaste.click();
-        }
-      });
-    });
-
-    els.confirmPaste.onclick = () => {
-      currentTranscript = els.transcriptInput.value.trim();
-      if (!currentTranscript) return alert('請輸入內容');
-      els.contentDisplay.textContent = currentTranscript;
-      els.originalContent.classList.remove('hidden');
-      els.analyzeSection.classList.remove('hidden');
-      els.result.classList.add('hidden');
-      els.errorMsg.classList.add('hidden');
-      els.exportBtn.classList.add('hidden');
-    };
-
-    els.fileInput.onchange = e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        currentTranscript = ev.target.result;
-        els.contentDisplay.textContent = currentTranscript;
-        els.originalContent.classList.remove('hidden');
-        els.analyzeSection.classList.remove('hidden');
-        els.result.classList.add('hidden');
-        els.errorMsg.classList.add('hidden');
-        els.exportBtn.classList.add('hidden');
-      };
-      reader.readAsText(file);
-    };
-
-    els.analyzeBtn.onclick = async () => {
-      const apiKey = localStorage.getItem('gemini_api_key');
-      if (!apiKey) return alert('請先儲存 Gemini API Key！');
-
-      els.analyzing.classList.remove('hidden');
-      els.analyzeSection.classList.add('hidden');
-      els.result.classList.add('hidden');
-      els.errorMsg.classList.add('hidden');
-
-      try {
-        // 關鍵修正：使用 v1beta + gemini-2.5-flash
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              role: "user",
-              parts: [{ text: `你是一位專業的內容分析師。請對以下短視頻文字稿進行全面分析，並嚴格以純 JSON 格式回應（不要任何 markdown 或說明文字）：
-
-【文字稿內容】
-${currentTranscript}
-
-請使用以下 JSON 結構：
-{
-  "truthRating": 1到5的整數,
-  "aiGenerated": "低" | "中" | "高",
-  "scamRisk": "無" | "低" | "中" | "高" | "極高",
-  "innovationValue": "無" | "低" | "中" | "高" | "突破性",
-  "consciousnessLevel": "詳細描述意識層級",
-  "recommendation": "可信" | "謹慎對待" | "高度質疑" | "避免傳播",
-  "truthVerification": { "factCheck": "...", "sourceTracking": "...", "logicConsistency": "..." },
-  "aiHallucination": { "contentFeatures": "...", "factualErrors": "...", "credibilityScore": 1到10的整數 },
-  "scamDetection": { "urgencyManipulation": "...", "authorityImpersonation": "...", "emotionalManipulation": "...", "overPromising": "..." },
-  "aiInnovation": { "technicalInnovation": "...", "practicalValue": "...", "feasibility": "..." },
-  "redFlags": ["...", "..."],
-  "positives": ["...", "..."],
-  "improvements": ["...", "..."]
-}` }]
-            }],
-            generationConfig: { temperature: 0.3, maxOutputTokens: 4000 }
-          })
-        });
-
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.error?.message || 'API 請求失敗');
+        // --- Initialize ---
+        const savedKey = localStorage.getItem('gemini_api_key');
+        if (savedKey) {
+            apiKeyInput.value = savedKey;
+            apiKeyInput.placeholder = "金鑰已儲存";
         }
 
-        const data = await response.json();
-        const text = data.candidates[0].content.parts[0].text.trim();
-        const jsonText = text.replace(/```json\n?|```/g, '').trim();
-        currentAnalysis = JSON.parse(jsonText);
+        document.getElementById('save-key-btn').onclick = () => {
+            const val = apiKeyInput.value.trim();
+            if (val.startsWith('AIzaSy')) {
+                localStorage.setItem('gemini_api_key', val);
+                showMessage("金鑰已安全存儲");
+            } else {
+                showError("金鑰格式不正確");
+            }
+        };
 
-        // renderResult 與 exportBtn 邏輯（保持不變）
-        els.result.innerHTML = `
-          <!-- 同之前的完整渲染結果 HTML -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- ... 綜合評估、詳細分析、紅旗等完整內容 ... -->
-          </div>
-          <!-- 其餘渲染內容同前，為了節省篇幅這裡省略，但實際使用時請保留完整 -->
-        `;
-        els.result.classList.remove('hidden');
-        els.exportBtn.classList.remove('hidden');
-        lucide.createIcons();
-      } catch (err) {
-        els.errorText.textContent = err.message.includes('quota') ? '已超過免費額度，請明日再試' : err.message;
-        els.errorMsg.classList.remove('hidden');
-      } finally {
-        els.analyzing.classList.add('hidden');
-        lucide.createIcons();
-      }
-    };
+        document.getElementById('use-sample').onclick = () => {
+            inputText.value = "最新消息！現在只要掃碼註冊就能領取 5000 元獎金，這是政府沒告訴你的秘密補貼，我是內部人員偷偷放出來的消息。最後 10 個名額，手慢就沒了！";
+        };
 
-    // exportBtn.onclick 保持不變（同前一版）
+        document.getElementById('file-upload').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => { inputText.value = ev.target.result; };
+            reader.readAsText(file);
+        };
 
-  </script>
+        // --- Core Logic ---
+
+        async function analyzeWithRetry(text, apiKey) {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent?key=${apiKey}`;
+            const systemPrompt = "你是一位頂尖的內容安全與數據分析專家，擅長識破短視頻中的詐騙、AI 幻覺與情緒操控。";
+            const userPrompt = `請分析以下文字稿，並嚴格按照 JSON 格式回傳：\n\n【文字稿】\n${text}`;
+            
+            const responseSchema = {
+                type: "OBJECT",
+                properties: {
+                    rating: { type: "NUMBER", description: "1-5 分的真實度分值" },
+                    risk_level: { type: "STRING", enum: ["無", "低", "中", "高", "極高"] },
+                    is_ai: { type: "STRING", enum: ["低", "中", "高"], description: "AI 生成的可能性" },
+                    verdict: { type: "STRING", description: "一句話總結建議" },
+                    fact_check: { type: "STRING", description: "邏輯一致性分析" },
+                    scam_tricks: { type: "ARRAY", items: { type: "STRING" }, description: "偵測到的話術技巧" },
+                    red_flags: { type: "ARRAY", items: { type: "STRING" }, description: "具體的可疑點" }
+                },
+                required: ["rating", "risk_level", "is_ai", "verdict", "fact_check", "scam_tricks", "red_flags"]
+            };
+
+            const payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: responseSchema,
+                    temperature: 0.2
+                }
+            };
+
+            for (let i = 0; i < config.retryCount; i++) {
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        return JSON.parse(data.candidates[0].content.parts[0].text);
+                    }
+
+                    if (response.status === 429) { // Rate limit
+                        const delay = Math.pow(2, i) * 1000;
+                        retryInfo.textContent = `頻率限制，${delay/1000}秒後重試...`;
+                        await new Promise(r => setTimeout(r, delay));
+                        continue;
+                    }
+
+                    const errData = await response.json();
+                    throw new Error(errData.error?.message || "網路請求錯誤");
+                } catch (err) {
+                    if (i === config.retryCount - 1) throw err;
+                    const delay = Math.pow(2, i) * 1000;
+                    await new Promise(r => setTimeout(r, delay));
+                }
+            }
+        }
+
+        analyzeBtn.onclick = async () => {
+            const key = localStorage.getItem('gemini_api_key');
+            const text = inputText.value.trim();
+
+            if (!key) return showError("請先輸入並儲存 API Key");
+            if (text.length < 10) return showError("輸入內容太短，無法分析");
+
+            // UI Reset
+            analyzeBtn.disabled = true;
+            emptyState.classList.add('hidden');
+            resultView.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            retryInfo.textContent = "";
+
+            try {
+                const result = await analyzeWithRetry(text, key);
+                renderResult(result);
+            } catch (err) {
+                showError(err.message);
+                emptyState.classList.remove('hidden');
+            } finally {
+                loadingState.classList.add('hidden');
+                analyzeBtn.disabled = false;
+            }
+        };
+
+        function renderResult(data) {
+            const getRiskColor = (lvl) => {
+                const map = { "無": "text-green-500", "低": "text-blue-500", "中": "text-yellow-500", "高": "text-orange-500", "極高": "text-red-500" };
+                return map[lvl] || "text-slate-500";
+            };
+
+            resultView.innerHTML = `
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                    <div class="flex flex-wrap gap-4 mb-6">
+                        <div class="flex-1 min-w-[120px] bg-slate-50 p-4 rounded-xl text-center">
+                            <div class="text-xs text-slate-500 mb-1">真實度評分</div>
+                            <div class="text-3xl font-black text-indigo-600">${data.rating}/5</div>
+                        </div>
+                        <div class="flex-1 min-w-[120px] bg-slate-50 p-4 rounded-xl text-center">
+                            <div class="text-xs text-slate-500 mb-1">風險等級</div>
+                            <div class="text-2xl font-bold ${getRiskColor(data.risk_level)}">${data.risk_level}</div>
+                        </div>
+                        <div class="flex-1 min-w-[120px] bg-slate-50 p-4 rounded-xl text-center">
+                            <div class="text-xs text-slate-500 mb-1">AI 可能性</div>
+                            <div class="text-2xl font-bold text-slate-700">${data.is_ai}</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6 p-4 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-xl">
+                        <h4 class="font-bold text-indigo-900 flex items-center gap-2 mb-1">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i> AI 核心判定
+                        </h4>
+                        <p class="text-indigo-800">${data.verdict}</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <section>
+                            <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">邏輯事實檢查</h4>
+                            <p class="text-slate-700 leading-relaxed">${data.fact_check}</p>
+                        </section>
+
+                        <section>
+                            <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">偵測到的話術</h4>
+                            <div class="flex flex-wrap gap-2">
+                                ${data.scam_tricks.map(t => `<span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-sm">${t}</span>`).join('')}
+                            </div>
+                        </section>
+
+                        <section>
+                            <h4 class="text-sm font-bold text-red-400 uppercase tracking-wider mb-3">可疑红旗標籤</h4>
+                            <ul class="space-y-2">
+                                ${data.red_flags.map(f => `<li class="flex items-start gap-2 text-sm text-slate-600">
+                                    <i data-lucide="alert-triangle" class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0"></i> ${f}
+                                </li>`).join('')}
+                            </ul>
+                        </section>
+                    </div>
+                </div>
+            `;
+            resultView.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // --- UI Utilities ---
+        function showError(msg) {
+            document.getElementById('error-message').textContent = msg;
+            document.getElementById('error-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeError() {
+            document.getElementById('error-modal').classList.add('hidden');
+        }
+
+        function showMessage(msg) {
+            // Simple alert fallback for the context
+            console.log(msg);
+            const btn = document.getElementById('save-key-btn');
+            const originalText = btn.textContent;
+            btn.textContent = "已儲存 ✅";
+            setTimeout(() => btn.textContent = originalText, 2000);
+        }
+
+    </script>
 </body>
 </html>
+
