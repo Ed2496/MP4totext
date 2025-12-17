@@ -124,6 +124,7 @@
         };
 
         let currentAnalysis = null;
+        let currentInputText = "";
 
         // --- Elements ---
         const apiKeyInput = document.getElementById('api-key-input');
@@ -226,10 +227,10 @@
 
         analyzeBtn.onclick = async () => {
             const key = localStorage.getItem('gemini_api_key');
-            const text = inputText.value.trim();
+            currentInputText = inputText.value.trim();
 
             if (!key) return showError("請先輸入並儲存 API Key");
-            if (text.length < 10) return showError("輸入內容太短，無法分析");
+            if (currentInputText.length < 10) return showError("輸入內容太短，無法分析");
 
             // UI Reset
             analyzeBtn.disabled = true;
@@ -239,8 +240,8 @@
             retryInfo.textContent = "";
 
             try {
-                const result = await analyzeWithRetry(text, key);
-                renderResult(result);
+                currentAnalysis = await analyzeWithRetry(currentInputText, key);
+                renderResult(currentAnalysis);
             } catch (err) {
                 showError(err.message);
                 emptyState.classList.remove('hidden');
@@ -258,6 +259,13 @@
 
             resultView.innerHTML = `
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-start mb-6">
+                        <h3 class="text-xl font-bold text-slate-800">分析報告</h3>
+                        <button id="download-md-btn" class="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg text-sm hover:bg-slate-700 transition-colors">
+                            <i data-lucide="download" class="w-4 h-4"></i> 匯出 MD
+                        </button>
+                    </div>
+
                     <div class="flex flex-wrap gap-4 mb-6">
                         <div class="flex-1 min-w-[120px] bg-slate-50 p-4 rounded-xl text-center">
                             <div class="text-xs text-slate-500 mb-1">真實度評分</div>
@@ -306,6 +314,39 @@
             `;
             resultView.classList.remove('hidden');
             initIcons();
+
+            document.getElementById('download-md-btn').onclick = () => {
+                exportToMarkdown(data);
+            };
+        }
+
+        function exportToMarkdown(data) {
+            const now = new Date().toLocaleString('zh-TW');
+            const markdown = `# 短視頻分析戰情報告\n\n` +
+                `> 生成時間：${now}\n\n` +
+                `## 1. 綜合評估\n` +
+                `- **真實度評分**：${data.rating} / 5\n` +
+                `- **風險等級**：${data.risk_level}\n` +
+                `- **AI 生成可能性**：${data.is_ai}\n\n` +
+                `## 2. AI 核心判定\n` +
+                `${data.verdict}\n\n` +
+                `## 3. 詳細分析\n` +
+                `### 邏輯事實檢查\n${data.fact_check}\n\n` +
+                `### 偵測話術\n${data.scam_tricks.map(t => `- ${t}`).join('\n')}\n\n` +
+                `### 紅旗警示\n${data.red_flags.map(f => `- 🚩 ${f}`).join('\n')}\n\n` +
+                `---\n` +
+                `## 原始文字稿\n` +
+                `\`\`\`text\n${currentInputText}\n\`\`\`\n`;
+
+            const blob = new Blob([markdown], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `分析報告_${new Date().getTime()}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
         // --- UI Utilities ---
